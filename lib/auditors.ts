@@ -1,0 +1,63 @@
+import { chat, providerOf } from "./btl";
+import { auditorSystemPrompt, auditorUserPrompt } from "./prompts";
+import { extractJson, normalizeSeverity } from "./json";
+import type { AuditorResult, Mode, RawFinding } from "./types";
+
+function coerceFindings(raw: string): RawFinding[] {
+  const parsed = extractJson<{ findings?: unknown[] }>(raw);
+  const list = Array.isArray(parsed?.findings) ? parsed!.findings : [];
+  return list.map((f) => {
+    const o = (f ?? {}) as Record<string, unknown>;
+    return {
+      title: String(o.title ?? "Untitled finding").trim(),
+      severity: normalizeSeverity(o.severity),
+      location: String(o.location ?? "—").trim(),
+      description: String(o.description ?? "").trim(),
+      recommendation: String(o.recommendation ?? "").trim(),
+    };
+  });
+}
+
+/** Fan the same input out to every auditor in parallel; one failure never kills the run. */
+export async function runAuditors(
+  models: string[],
+  mode: Mode,
+  input: string
+): Promise<AuditorResult[]> {
+  const system = auditorSystemPrompt(mode);
+  const user = auditorUserPrompt(mode, input);
+
+  const settled = await Promise.allSettled(
+    models.map((model) =>
+      chat(
+        model,
+        [
+          { role: "system", content: system },
+          { role: "user", content: user },
+        ],
+        { temperature: 0.1 }
+      )
+    )
+  );
+
+  return settled.map((res, i) => {
+    const model = models[i];
+    const provider = providerOf(model);
+    if (res.status === "fulfilled") {
+      return {
+        model,
+        provider,
+        findings: coerceFindings(res.value.content),
+        raw: res.value.content,
+        cost: res.value.cost,
+      };
+    }
+    return {
+      model,
+      provider,
+      findings: [],
+      raw: "",
+      error: res.reason?.message ?? String(res.reason),
+    };
+  });
+}
