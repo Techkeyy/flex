@@ -24,8 +24,11 @@ export async function POST(req: NextRequest) {
   if (!input) {
     return NextResponse.json({ error: "Nothing to audit — input is empty." }, { status: 400 });
   }
-  if (input.length > 40000) {
-    return NextResponse.json({ error: "Input too large (40k char limit)." }, { status: 413 });
+  if (input.length > 160000) {
+    return NextResponse.json(
+      { error: "Input too large (160k char limit) — trim the contract or split it." },
+      { status: 413 }
+    );
   }
 
   try {

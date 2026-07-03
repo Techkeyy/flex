@@ -57,6 +57,7 @@ export default function Home() {
 
       {/* HERO */}
       <header className="hero">
+        <div className="hero-art" aria-hidden="true" />
         <div className="wrap">
           <div className="eyebrow">Multi-model security triage · Solidity / EVM</div>
           <h1>
@@ -145,40 +146,77 @@ export default function Home() {
         <div className="wrap">
           <div className="eyebrow">How it works</div>
           <h2>Disagreement is the signal.</h2>
-          <div className="steps">
-            <div className="step">
-              <div className="n">01</div>
+          <p className="how-lede">
+            Four moves take a raw contract to a verdict you can actually weigh.
+          </p>
+
+          <div className="pipeline">
+            <div className="rail" aria-hidden="true" />
+
+            <div className="stage">
+              <div className="stage-top">
+                <span className="stage-node num">01</span>
+              </div>
               <h3>Fan out</h3>
               <p>
-                Your contract goes to three models from three providers at once —
-                one BTL key, one endpoint, one call fan. Diverse models catch
-                different bug classes.
+                Your contract hits three models from three providers at once — one
+                BTL key, one endpoint. Diverse models catch different bugs.
               </p>
+              <div className="fan">
+                <span className="fanchip">OpenAI</span>
+                <span className="fanchip">Google</span>
+                <span className="fanchip">Mistral</span>
+              </div>
             </div>
-            <div className="step">
-              <div className="n">02</div>
+
+            <div className="stage">
+              <div className="stage-top">
+                <span className="stage-node num">02</span>
+              </div>
               <h3>Reconcile</h3>
               <p>
-                A referee model merges the same vulnerability across auditors, even
-                when they word it differently, and records who flagged what.
+                A neutral referee merges the same vulnerability across auditors —
+                even when worded differently — and records who flagged what.
               </p>
+              <div className="fan">
+                <span className="fanchip solo">referee · qwen3-max</span>
+              </div>
             </div>
-            <div className="step">
-              <div className="n">03</div>
+
+            <div className="stage">
+              <div className="stage-top">
+                <span className="stage-node num">03</span>
+              </div>
               <h3>Triage</h3>
               <p>
-                All three agree → <b>confirmed</b>. Two of three → <b>contested</b>.
-                A lone flag → <b>needs review</b>: a subtle catch, or a false
-                positive. You decide with eyes open.
+                Agreement becomes a verdict — from unanimous to a lone dissent you
+                should read closely.
               </p>
+              <div className="outcomes">
+                <span className="oc oc-confirmed">
+                  <span className="ocdot" />Confirmed · 3/3
+                </span>
+                <span className="oc oc-contested">
+                  <span className="ocdot" />Contested · 2/3
+                </span>
+                <span className="oc oc-lone">
+                  <span className="ocdot" />Lone flag · 1/3
+                </span>
+              </div>
             </div>
-            <div className="step">
-              <div className="n">04</div>
+
+            <div className="stage">
+              <div className="stage-top">
+                <span className="stage-node num">04</span>
+              </div>
               <h3>Prove the cost</h3>
               <p>
                 Every run shows real spend and what BTL&apos;s routing and cache
-                saved you — straight from the gateway&apos;s response headers.
+                saved you — straight from the gateway headers.
               </p>
+              <div className="fan">
+                <span className="fanchip saved">↓ 50% saved by BTL</span>
+              </div>
             </div>
           </div>
 
@@ -197,7 +235,6 @@ export default function Home() {
       <footer className="footer">
         <div className="wrap footer-inner">
           <div className="brand">
-            <span className="brand-mark">F</span>
             <span className="brand-name">Flex</span>
           </div>
           <div className="muted">
@@ -276,21 +313,30 @@ function Results({
         </div>
       </div>
 
-      <div className="findings">
-        {findings.length === 0 && (
-          <div className="banner info">
-            No findings surfaced. In a real audit, treat that as &ldquo;nothing
-            obvious&rdquo; — not &ldquo;proven safe.&rdquo;
-          </div>
-        )}
-        {findings.map((f) => (
-          <Finding
-            key={f.id}
-            f={f}
-            isOpen={!!open[f.id]}
-            toggle={() => setOpen({ ...open, [f.id]: !open[f.id] })}
-          />
-        ))}
+      <div className="findings-section">
+        <div className="findings-head">
+          <div className="eyebrow">Findings</div>
+          <span className="findings-count num">{findings.length}</span>
+          {findings.length > 0 && (
+            <span className="findings-hint">tap a row to expand</span>
+          )}
+        </div>
+        <div className="findings">
+          {findings.length === 0 && (
+            <div className="banner info">
+              No findings surfaced. In a real audit, treat that as &ldquo;nothing
+              obvious&rdquo; — not &ldquo;proven safe.&rdquo;
+            </div>
+          )}
+          {findings.map((f) => (
+            <Finding
+              key={f.id}
+              f={f}
+              isOpen={!!open[f.id]}
+              toggle={() => setOpen({ ...open, [f.id]: !open[f.id] })}
+            />
+          ))}
+        </div>
       </div>
 
       {/* the debate */}
@@ -351,11 +397,13 @@ function Finding({
         : `Lone flag 1/${f.modelsTotal}`;
 
   return (
-    <div className="finding">
+    <div className={`finding edge-${f.severity}${isOpen ? " open" : ""}`}>
       <div className="finding-head" onClick={toggle}>
-        <span className="finding-id num">{f.id}</span>
         <div className="finding-main">
-          <p className="finding-title">{f.title}</p>
+          <div className="finding-titlerow">
+            <span className="finding-id num">{f.id}</span>
+            <p className="finding-title">{f.title}</p>
+          </div>
           <span className="finding-loc">{f.location}</span>
         </div>
         <div className="finding-badges">
@@ -363,6 +411,9 @@ function Finding({
           <span className={`con con-${f.consensus}`}>
             <span className="cdot" />
             {conLabel}
+          </span>
+          <span className="chevron" aria-hidden="true">
+            {isOpen ? "−" : "+"}
           </span>
         </div>
       </div>

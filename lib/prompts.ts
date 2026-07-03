@@ -27,6 +27,12 @@ export function auditorSystemPrompt(mode: Mode): string {
 Find real, exploitable vulnerabilities. Consider: reentrancy, access control, integer over/underflow,
 unchecked external calls, delegatecall, tx.origin auth, front-running/MEV, oracle manipulation,
 uninitialized/unprotected proxies, denial of service, signature replay, and unsafe ERC20 handling.
+
+The input may be Solidity source OR a fully compiled contract string (a long 0x… EVM bytecode blob).
+If it is bytecode, disassemble/decompile it mentally and reason about the opcode and control flow for the
+same vulnerability classes (delegatecall, selfdestruct, unprotected SSTORE of owner slots, missing auth on
+external calls, etc.). Because source-level context is absent, be explicit in each finding's description
+that it is derived from bytecode, and keep confidence proportionate.
 ${SEVERITY_GUIDE}
 ${JSON_SHAPE}`;
   }
@@ -46,7 +52,7 @@ ${JSON_SHAPE}`;
 export function auditorUserPrompt(mode: Mode, input: string): string {
   const label =
     mode === "contract"
-      ? "Solidity contract"
+      ? "Contract to review (Solidity source or compiled 0x… bytecode)"
       : mode === "code"
         ? "Code"
         : "Question";

@@ -10,7 +10,6 @@ export default function Nav({ variant = "app" }: { variant?: "app" | "docs" }) {
     <nav className="nav">
       <div className="wrap nav-inner">
         <Link href="/" className="brand">
-          <span className="brand-mark">F</span>
           <span className="brand-name">Flex</span>
         </Link>
         <div className="nav-links">
