@@ -119,7 +119,7 @@ section[id] { scroll-margin-top: var(--nav-h); }
 .hero-art {
   position: absolute; inset: 0;
   background: url("/hero-network.jpg") center center / cover no-repeat;
-  opacity: 0.55;
+  opacity: 0.72;
   /* light blur + slight scale: reads as an intentional ambient backdrop and
      hides upscaling of the small source image on wide screens */
   filter: saturate(1.06) blur(1.5px);
@@ -136,7 +136,7 @@ section[id] { scroll-margin-top: var(--nav-h); }
     linear-gradient(180deg, var(--bg) 0%, rgba(11, 11, 14, 0) 20%, rgba(11, 11, 14, 0) 66%, var(--bg) 100%);
 }
 @media (max-width: 720px) {
-  .hero-art { opacity: 0.34; }
+  .hero-art { opacity: 0.44; }
   .hero::after {
     background:
       linear-gradient(180deg, rgba(11, 11, 14, 0.4) 0%, rgba(11, 11, 14, 0.72) 52%, var(--bg) 100%);
