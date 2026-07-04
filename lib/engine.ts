@@ -8,6 +8,7 @@ import type {
   BtlCost,
   Mode,
   MergedFinding,
+  Posture,
 } from "./types";
 
 function auditorModels(): string[] {
@@ -71,6 +72,43 @@ function forceMock(): boolean {
   return process.env.FLEX_FORCE_MOCK === "1";
 }
 
+/**
+ * Honest, data-driven posture — computed from consensus, never from model prose.
+ * This is the guard against the failure mode where a lone-model hallucination
+ * gets dressed up as an authoritative "critical vulnerability" in the headline.
+ */
+function computePosture(findings: MergedFinding[]): Posture {
+  if (findings.length === 0) {
+    return {
+      level: "clean",
+      line: "No issues surfaced — nothing obvious, but that is not a proof of safety.",
+    };
+  }
+  const corroborated = findings.filter((f) => f.consensus !== "lone");
+  const lone = findings.length - corroborated.length;
+
+  if (corroborated.length === 0) {
+    return {
+      level: "no-consensus",
+      line: `No model consensus. All ${lone} flag${lone === 1 ? "" : "s"} come from a single model and are unverified — treat them as leads to check, not confirmed findings.`,
+    };
+  }
+  const c = corroborated.length;
+  return {
+    level: "corroborated",
+    line: `${c} issue${c === 1 ? "" : "s"} corroborated by 2+ auditors${
+      lone ? `, plus ${lone} single-model flag${lone === 1 ? "" : "s"} to review` : ""
+    }.`,
+  };
+}
+
+/** Heuristic: a long, unbroken hex string is compiled bytecode, not source. */
+function detectBytecode(mode: Mode, input: string): boolean {
+  if (mode !== "contract") return false;
+  const t = input.trim().replace(/^0x/i, "");
+  return t.length > 200 && /^[0-9a-fA-F]+$/.test(t);
+}
+
 export async function runAudit(mode: Mode, input: string): Promise<AuditResult> {
   const started = Date.now();
   const referee = refereeModel();
@@ -84,6 +122,7 @@ export async function runAudit(mode: Mode, input: string): Promise<AuditResult> 
     return {
       mode,
       headline: merged.headline,
+      posture: computePosture(merged.findings),
       summary: summarize(merged.findings),
       findings: merged.findings,
       auditors: auditors.map((a) => ({
@@ -94,7 +133,12 @@ export async function runAudit(mode: Mode, input: string): Promise<AuditResult> 
         costLabel: undefined,
       })),
       receipt: mockReceipt(),
-      meta: { durationMs: Date.now() - started, usedMock: true, refereeModel: referee },
+      meta: {
+        durationMs: Date.now() - started,
+        usedMock: true,
+        refereeModel: referee,
+        bytecodeMode: detectBytecode(mode, input),
+      },
     };
   }
 
@@ -111,6 +155,7 @@ export async function runAudit(mode: Mode, input: string): Promise<AuditResult> 
   return {
     mode,
     headline,
+    posture: computePosture(findings),
     summary: summarize(findings),
     findings,
     auditors: auditors.map((a) => ({
@@ -124,6 +169,11 @@ export async function runAudit(mode: Mode, input: string): Promise<AuditResult> 
         : undefined,
     })),
     receipt: receiptFrom(costs),
-    meta: { durationMs: Date.now() - started, usedMock: false, refereeModel: referee },
+    meta: {
+      durationMs: Date.now() - started,
+      usedMock: false,
+      refereeModel: referee,
+      bytecodeMode: detectBytecode(mode, input),
+    },
   };
 }

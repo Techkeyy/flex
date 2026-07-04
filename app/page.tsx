@@ -274,9 +274,24 @@ function Results({
         </div>
       )}
 
+      {meta.bytecodeMode && (
+        <div className="banner warn" style={{ marginBottom: 16 }}>
+          <b>Bytecode analysis.</b> Findings are low-confidence pattern matches, not
+          verified against source — models can hallucinate vulnerabilities at
+          invented offsets. Paste verified Solidity <b>source</b> for a real audit.
+        </div>
+      )}
+
       <div className="verdict">
         <div className="eyebrow">Reconciled verdict</div>
-        <h2>{result.headline}</h2>
+        <div className={`posture posture-${result.posture.level}`}>
+          <span className="posture-dot" />
+          {result.posture.line}
+        </div>
+        <p className="verdict-summary">
+          <span className="vs-label">Model summary</span>
+          {result.headline}
+        </p>
 
         <div className="stats">
           <Stat k="Critical" v={summary.critical} />
@@ -396,8 +411,13 @@ function Finding({
         ? `Contested ${f.modelsAgreed.length}/${f.modelsTotal}`
         : `Lone flag 1/${f.modelsTotal}`;
 
+  const unverified = f.consensus === "lone";
   return (
-    <div className={`finding edge-${f.severity}${isOpen ? " open" : ""}`}>
+    <div
+      className={`finding edge-${f.severity}${unverified ? " unverified" : ""}${
+        isOpen ? " open" : ""
+      }`}
+    >
       <div className="finding-head" onClick={toggle}>
         <div className="finding-main">
           <div className="finding-titlerow">
@@ -407,7 +427,10 @@ function Finding({
           <span className="finding-loc">{f.location}</span>
         </div>
         <div className="finding-badges">
-          <span className={`sev sev-${f.severity}`}>{f.severity}</span>
+          <span className={`sev sev-${f.severity}`}>
+            {f.severity}
+            {unverified && <span className="sev-unverified">unverified</span>}
+          </span>
           <span className={`con con-${f.consensus}`}>
             <span className="cdot" />
             {conLabel}

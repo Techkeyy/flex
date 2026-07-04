@@ -7,19 +7,28 @@ const SEVERITY_GUIDE = `Severity must be one of: "critical", "high", "medium", "
 - low: minor / best-practice / gas.
 - info: stylistic or informational only.`;
 
+const ANTI_FABRICATION = `HARD RULES — a false positive is worse than a miss:
+- Only report a vulnerability you can tie to SPECIFIC, concrete code you can actually see.
+- NEVER invent function names, line numbers, or bytecode offsets. Do NOT report findings against
+  "unknown function" or an invented "offset 0x…".
+- Do NOT pattern-match a generic top-10 checklist (selfdestruct, delegatecall, tx.origin, reentrancy)
+  onto code that does not actually contain those constructs. If the construct isn't there, it isn't a finding.
+- If you are not confident an issue is really present, omit it. An empty list is a correct, valued answer.`;
+
 const JSON_SHAPE = `Return ONLY a JSON object of this exact shape, no prose, no markdown fences:
 {
   "findings": [
     {
       "title": "short vulnerability name",
       "severity": "critical|high|medium|low|info",
-      "location": "function name and/or line reference",
+      "location": "the exact function/line you can see (never an invented offset)",
       "description": "what the bug is and how it is exploited, concretely",
       "recommendation": "the concrete fix"
     }
   ]
 }
-If you find nothing, return {"findings": []}. Do not invent issues to seem thorough — false positives are penalized.`;
+If you find nothing, return {"findings": []}.
+${ANTI_FABRICATION}`;
 
 export function auditorSystemPrompt(mode: Mode): string {
   if (mode === "contract") {
@@ -28,11 +37,12 @@ Find real, exploitable vulnerabilities. Consider: reentrancy, access control, in
 unchecked external calls, delegatecall, tx.origin auth, front-running/MEV, oracle manipulation,
 uninitialized/unprotected proxies, denial of service, signature replay, and unsafe ERC20 handling.
 
-The input may be Solidity source OR a fully compiled contract string (a long 0x… EVM bytecode blob).
-If it is bytecode, disassemble/decompile it mentally and reason about the opcode and control flow for the
-same vulnerability classes (delegatecall, selfdestruct, unprotected SSTORE of owner slots, missing auth on
-external calls, etc.). Because source-level context is absent, be explicit in each finding's description
-that it is derived from bytecode, and keep confidence proportionate.
+The input may be Solidity source OR a compiled contract string (a long 0x… EVM bytecode blob).
+Bytecode WITHOUT source is very hard to audit reliably and is a common source of false positives.
+If given bytecode you cannot confidently decompile into concrete, named logic, report NOTHING rather than
+guessing — do not fabricate findings at invented offsets or against "unknown functions". Only report a
+bytecode finding when you can identify the exact opcode pattern AND explain the concrete exploit; otherwise
+return {"findings": []}.
 ${SEVERITY_GUIDE}
 ${JSON_SHAPE}`;
   }
@@ -71,9 +81,17 @@ Rules:
 - "modelsAgreed" MUST list exactly the auditor model ids that reported that vulnerability.
 - Do NOT add vulnerabilities that no auditor reported.
 
+HEADLINE HONESTY — this is the most important rule:
+- The headline MUST reflect CONSENSUS, not the mere union of findings.
+- If NO finding was reported by 2+ auditors, the headline MUST say plainly that there is NO model consensus
+  and that every flag is a single model's UNVERIFIED observation. Do NOT assert the contract "has critical
+  vulnerabilities" in that case.
+- Never state a lone (single-model) finding as established fact — describe it as "one model flagged…".
+- Only describe an issue as real or likely when 2+ auditors independently agree on it.
+
 Return ONLY this JSON, no prose, no fences:
 {
-  "headline": "one-sentence plain-English summary of the contract's risk posture",
+  "headline": "one-sentence summary that reflects the CONSENSUS level per the rules above",
   "findings": [
     {
       "title": "...",

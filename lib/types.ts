@@ -68,9 +68,18 @@ export interface AuditSummary {
   lone: number;
 }
 
+export type PostureLevel = "clean" | "no-consensus" | "corroborated";
+
+/** Data-driven honesty line, computed from consensus — never from model prose. */
+export interface Posture {
+  level: PostureLevel;
+  line: string;
+}
+
 export interface AuditResult {
   mode: Mode;
   headline: string;
+  posture: Posture;
   summary: AuditSummary;
   findings: MergedFinding[];
   auditors: Array<Omit<AuditorResult, "cost"> & { costLabel?: string }>;
@@ -79,5 +88,6 @@ export interface AuditResult {
     durationMs: number;
     usedMock: boolean;
     refereeModel: string;
+    bytecodeMode: boolean;
   };
 }
