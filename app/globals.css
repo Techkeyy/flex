@@ -123,27 +123,29 @@ section[id] { scroll-margin-top: var(--nav-h); }
 .hero .wrap { position: relative; z-index: 3; }
 /* the network/consensus image, right-anchored and melted into the dark */
 .hero-art {
-  position: absolute; top: 0; right: 0; height: 100%;
-  width: min(720px, 66%);
-  background: url("/hero-network.jpg") center right / cover no-repeat;
-  opacity: 0.62;
-  filter: saturate(1.05);
+  position: absolute; inset: 0;
+  background: url("/hero-network.jpg") center center / cover no-repeat;
+  opacity: 0.55;
+  /* light blur + slight scale: reads as an intentional ambient backdrop and
+     hides upscaling of the small source image on wide screens */
+  filter: saturate(1.06) blur(1.5px);
+  transform: scale(1.08);
   z-index: 1;
   pointer-events: none;
 }
 .hero::after {
   content: ""; position: absolute; inset: 0; z-index: 2; pointer-events: none;
   background:
-    linear-gradient(90deg, var(--bg) 16%, rgba(11, 11, 14, 0) 62%),
-    linear-gradient(0deg, var(--bg) 3%, rgba(11, 11, 14, 0) 40%),
-    linear-gradient(180deg, var(--bg) 1%, rgba(11, 11, 14, 0) 26%);
+    /* readability scrim: dark under the copy on the left, clearing to the right */
+    linear-gradient(90deg, var(--bg) 10%, rgba(11, 11, 14, 0.62) 40%, rgba(11, 11, 14, 0.18) 76%, rgba(11, 11, 14, 0) 100%),
+    /* melt the image into the page above and below */
+    linear-gradient(180deg, var(--bg) 0%, rgba(11, 11, 14, 0) 20%, rgba(11, 11, 14, 0) 66%, var(--bg) 100%);
 }
 @media (max-width: 720px) {
-  .hero-art { width: 100%; opacity: 0.28; }
+  .hero-art { opacity: 0.34; }
   .hero::after {
     background:
-      linear-gradient(180deg, rgba(11, 11, 14, 0.5) 0%, var(--bg) 70%),
-      linear-gradient(90deg, var(--bg) 8%, rgba(11, 11, 14, 0) 80%);
+      linear-gradient(180deg, rgba(11, 11, 14, 0.4) 0%, rgba(11, 11, 14, 0.72) 52%, var(--bg) 100%);
   }
 }
 .hero h1 {
