@@ -16,7 +16,7 @@ export async function POST(req: NextRequest) {
   }
 
   const mode = (body.mode ?? "contract") as Mode;
-  const input = (body.input ?? "").trim();
+  const input = typeof body.input === "string" ? body.input.trim() : "";
 
   if (!MODES.includes(mode)) {
     return NextResponse.json({ error: `Unknown mode "${mode}".` }, { status: 400 });

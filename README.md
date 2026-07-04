@@ -58,10 +58,10 @@ samples/
 
 ## The models
 
-Swarm: `gpt-4.1` (OpenAI) · `gemini-2.5-flash` (Google) · `mistral-large` (Mistral)
+Swarm: `gpt-5-5` (OpenAI) · `gemini-2.5-pro` (Google) · `deepseek-v4-pro` (DeepSeek)
 Referee: `qwen3-max` (Qwen) — a fourth, neutral family
-All configurable via `.env.local`. For a deeper (slower) audit, swap the auditors to
-`gpt-5-5,gemini-2.5-pro,deepseek-v4-pro`.
+All configurable via `.env.local`. For a faster/cheaper (slightly noisier) demo, use
+`gpt-4.1,gemini-2.5-flash,mistral-large`.
 
 > Note: bare `claude-*` slugs are Anthropic-native and only serve `/v1/messages`.
 > Flex is built entirely on the OpenAI-compatible `/v1/chat/completions` surface,

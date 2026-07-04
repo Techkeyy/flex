@@ -145,6 +145,6 @@ export function mockMerged(models: string[]) {
 }
 
 function padModels(models: string[]): [string, string, string] {
-  const fallback = ["gpt-4.1", "gemini-2.5-flash", "mistral-large"];
+  const fallback = ["gpt-5-5", "gemini-2.5-pro", "deepseek-v4-pro"];
   return [models[0] ?? fallback[0], models[1] ?? fallback[1], models[2] ?? fallback[2]];
 }

@@ -12,7 +12,7 @@ import type {
 } from "./types";
 
 function auditorModels(): string[] {
-  return (process.env.FLEX_AUDITORS || "gpt-4.1,gemini-2.5-flash,mistral-large")
+  return (process.env.FLEX_AUDITORS || "gpt-5-5,gemini-2.5-pro,deepseek-v4-pro")
     .split(",")
     .map((s) => s.trim())
     .filter(Boolean);

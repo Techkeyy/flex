@@ -49,9 +49,9 @@ export default function Docs() {
         <pre>
           <code>{`contract
    │
-   ├─►  gpt-4.1           (OpenAI)   ┐
-   ├─►  gemini-2.5-flash  (Google)   ├─ parallel, via BTL
-   └─►  mistral-large     (Mistral)  ┘
+   ├─►  gpt-5-5          (OpenAI)    ┐
+   ├─►  gemini-2.5-pro   (Google)    ├─ parallel, via BTL
+   └─►  deepseek-v4-pro  (DeepSeek)  ┘
    │
    ▼   each returns structured findings (JSON)
    │
