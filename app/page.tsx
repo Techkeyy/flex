@@ -262,7 +262,13 @@ function Results({
   setOpen: (o: Record<string, boolean>) => void;
   usd: (n: number) => string;
 }) {
-  const { summary, findings, receipt, auditors, meta } = result;
+  const { findings, receipt, auditors, meta } = result;
+
+  const [showLone, setShowLone] = useState(false);
+  const corroborated = findings.filter((f) => f.consensus !== "lone");
+  const lone = findings.filter((f) => f.consensus === "lone");
+  const sevCount = (s: string) =>
+    corroborated.filter((f) => f.severity === s).length;
 
   return (
     <div className="results">
@@ -294,11 +300,11 @@ function Results({
         </p>
 
         <div className="stats">
-          <Stat k="Critical" v={summary.critical} />
-          <Stat k="High" v={summary.high} />
-          <Stat k="Medium" v={summary.medium} />
-          <Stat k="Confirmed" v={summary.confirmed} />
-          <Stat k="Needs review" v={summary.lone} />
+          <Stat k="Corroborated" v={corroborated.length} accent={corroborated.length > 0} />
+          <Stat k="Critical" v={sevCount("critical")} />
+          <Stat k="High" v={sevCount("high")} />
+          <Stat k="Medium" v={sevCount("medium")} />
+          <Stat k="Unverified" v={lone.length} muted />
         </div>
 
         <div className="receipt">
@@ -330,28 +336,56 @@ function Results({
 
       <div className="findings-section">
         <div className="findings-head">
-          <div className="eyebrow">Findings</div>
-          <span className="findings-count num">{findings.length}</span>
-          {findings.length > 0 && (
-            <span className="findings-hint">tap a row to expand</span>
+          <div className="eyebrow">Corroborated findings</div>
+          <span className="findings-count num">{corroborated.length}</span>
+          {corroborated.length > 0 && (
+            <span className="findings-hint">flagged by 2+ auditors · tap to expand</span>
           )}
         </div>
-        <div className="findings">
-          {findings.length === 0 && (
-            <div className="banner info">
-              No findings surfaced. In a real audit, treat that as &ldquo;nothing
-              obvious&rdquo; — not &ldquo;proven safe.&rdquo;
-            </div>
-          )}
-          {findings.map((f) => (
-            <Finding
-              key={f.id}
-              f={f}
-              isOpen={!!open[f.id]}
-              toggle={() => setOpen({ ...open, [f.id]: !open[f.id] })}
-            />
-          ))}
-        </div>
+
+        {corroborated.length === 0 ? (
+          <div className="banner info">
+            {lone.length === 0
+              ? "No findings surfaced — nothing obvious, but that is not a proof of safety."
+              : "Nothing was flagged by 2+ auditors. On a sound contract that is the expected result — the flags below are single-model and unverified."}
+          </div>
+        ) : (
+          <div className="findings">
+            {corroborated.map((f) => (
+              <Finding
+                key={f.id}
+                f={f}
+                isOpen={!!open[f.id]}
+                toggle={() => setOpen({ ...open, [f.id]: !open[f.id] })}
+              />
+            ))}
+          </div>
+        )}
+
+        {lone.length > 0 && (
+          <div className="lone-section">
+            <button
+              className="lone-toggle"
+              onClick={() => setShowLone(!showLone)}
+            >
+              <span className="lone-chevron">{showLone ? "−" : "+"}</span>
+              {lone.length} unverified single-model flag
+              {lone.length > 1 ? "s" : ""} — likely noise, review with skepticism
+            </button>
+            {showLone && (
+              <div className="findings" style={{ marginTop: 12 }}>
+                {lone.map((f) => (
+                  <Finding
+                    key={f.id}
+                    f={f}
+                    isOpen={!!open[f.id]}
+                    toggle={() => setOpen({ ...open, [f.id]: !open[f.id] })}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* the debate */}
@@ -386,9 +420,19 @@ function Results({
   );
 }
 
-function Stat({ k, v }: { k: string; v: number }) {
+function Stat({
+  k,
+  v,
+  accent,
+  muted,
+}: {
+  k: string;
+  v: number;
+  accent?: boolean;
+  muted?: boolean;
+}) {
   return (
-    <div className="stat">
+    <div className={`stat${accent ? " stat-accent" : ""}${muted ? " stat-muted" : ""}`}>
       <div className="k">{k}</div>
       <div className="v">{v}</div>
     </div>
