@@ -1,11 +1,17 @@
 import { chat, providerOf } from "./btl";
 import { auditorSystemPrompt, auditorUserPrompt } from "./prompts";
-import { extractJson, normalizeSeverity } from "./json";
+import { extractJson, normalizeSeverity, salvageFindings } from "./json";
 import type { AuditorResult, Mode, RawFinding } from "./types";
 
 function coerceFindings(raw: string): RawFinding[] {
   const parsed = extractJson<{ findings?: unknown[] }>(raw);
-  const list = Array.isArray(parsed?.findings) ? parsed!.findings : [];
+  let list = Array.isArray(parsed?.findings) ? parsed!.findings : [];
+  // If clean parsing yielded nothing but the raw text clearly held findings,
+  // the response was likely truncated — salvage the complete ones.
+  if (list.length === 0) {
+    const salvaged = salvageFindings(raw);
+    if (salvaged.length) list = salvaged;
+  }
   return list.map((f) => {
     const o = (f ?? {}) as Record<string, unknown>;
     return {
@@ -35,7 +41,9 @@ export async function runAuditors(
           { role: "system", content: system },
           { role: "user", content: user },
         ],
-        { temperature: 0.1 }
+        // Generous budget: reasoning models spend tokens thinking before they
+        // emit, so a small cap truncates the findings JSON on large contracts.
+        { temperature: 0.1, maxTokens: 12000 }
       )
     )
   );

@@ -280,11 +280,44 @@ function Results({
         </div>
       )}
 
-      {meta.bytecodeMode && (
+      {meta.source?.kind === "address-source" && (
+        <div className="banner ok" style={{ marginBottom: 16 }}>
+          <b>On-chain source fetched.</b> {meta.source.note}
+        </div>
+      )}
+
+      {meta.source?.kind === "address-bytecode" && (
+        <div className="banner warn" style={{ marginBottom: 16 }}>
+          <b>Unverified contract — bytecode only.</b> {meta.source.note} Paste
+          verified Solidity <b>source</b> for a high-confidence audit.
+        </div>
+      )}
+
+      {meta.source?.kind === "address-unfetched" && (
+        <div className="banner warn" style={{ marginBottom: 16 }}>
+          <b>Couldn&apos;t fetch on-chain code.</b> {meta.source.note}
+        </div>
+      )}
+
+      {meta.bytecodeMode && meta.source?.kind === "inline" && (
         <div className="banner warn" style={{ marginBottom: 16 }}>
           <b>Bytecode analysis.</b> Findings are low-confidence pattern matches, not
           verified against source — models can hallucinate vulnerabilities at
           invented offsets. Paste verified Solidity <b>source</b> for a real audit.
+        </div>
+      )}
+
+      {auditors.some((a) => a.error) && (
+        <div className="banner warn" style={{ marginBottom: 16 }}>
+          <b>Degraded swarm — {auditors.filter((a) => !a.error).length} of{" "}
+          {auditors.length} auditors completed.</b> Consensus is computed only over
+          those that ran, so agreement counts are thinner than a full swarm.
+          Unavailable:{" "}
+          {auditors
+            .filter((a) => a.error)
+            .map((a) => `${a.model} (${a.error})`)
+            .join(", ")}
+          .
         </div>
       )}
 

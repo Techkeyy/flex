@@ -1,6 +1,7 @@
 import { hasKey } from "./btl";
 import { runAuditors } from "./auditors";
 import { reconcile } from "./consensus";
+import { resolveContractInput } from "./resolve";
 import { mockAuditors, mockMerged } from "./mock";
 import type {
   AuditResult,
@@ -8,6 +9,7 @@ import type {
   Mode,
   MergedFinding,
   Posture,
+  SourceMeta,
 } from "./types";
 
 function auditorModels(): string[] {
@@ -124,13 +126,56 @@ export async function runAudit(mode: Mode, input: string): Promise<AuditResult> 
         usedMock: true,
         refereeModel: referee,
         bytecodeMode: detectBytecode(mode, input),
+        source: { kind: "inline" },
       },
     };
   }
 
   // LIVE MODE — real BTL calls.
+  // For contract mode, resolve a bare on-chain address to its real code first,
+  // so the swarm audits actual source/bytecode instead of model memory.
+  let auditInput = input;
+  let source: SourceMeta = { kind: "inline" };
+  if (mode === "contract") {
+    const resolved = await resolveContractInput(input);
+    auditInput = resolved.input;
+    source = resolved.source;
+  }
+
   const models = auditorModels();
-  const auditors = await runAuditors(models, mode, input);
+  const auditors = await runAuditors(models, mode, auditInput);
+
+  // If every auditor failed (commonly an out-of-credits gateway), don't call the
+  // referee — it would throw the same error and 500 the whole request. Return an
+  // honest degraded result so the UI can explain what happened.
+  if (!auditors.some((a) => !a.error)) {
+    return {
+      mode,
+      headline: "No auditors completed — the swarm could not run.",
+      posture: {
+        level: "no-consensus",
+        line: "Every auditor call failed, so there is nothing to reconcile — see the errors below (often an out-of-credits gateway).",
+      },
+      findings: [],
+      auditors: auditors.map((a) => ({
+        model: a.model,
+        provider: a.provider,
+        findings: a.findings,
+        raw: a.raw,
+        error: a.error,
+        costLabel: undefined,
+      })),
+      receipt: receiptFrom([]),
+      meta: {
+        durationMs: Date.now() - started,
+        usedMock: false,
+        refereeModel: referee,
+        bytecodeMode: detectBytecode(mode, auditInput),
+        source,
+      },
+    };
+  }
+
   const { findings, headline, cost: refCost } = await reconcile(referee, auditors);
 
   const costs: BtlCost[] = [
@@ -158,7 +203,8 @@ export async function runAudit(mode: Mode, input: string): Promise<AuditResult> 
       durationMs: Date.now() - started,
       usedMock: false,
       refereeModel: referee,
-      bytecodeMode: detectBytecode(mode, input),
+      bytecodeMode: detectBytecode(mode, auditInput),
+      source,
     },
   };
 }

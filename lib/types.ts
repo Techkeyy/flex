@@ -65,6 +65,22 @@ export interface Posture {
   line: string;
 }
 
+/** How the audited code was obtained — so the UI can be honest about it.
+ *  address-* means we resolved a bare on-chain address to real code. */
+export type SourceKind =
+  | "inline"
+  | "address-source"
+  | "address-bytecode"
+  | "address-unfetched";
+
+export interface SourceMeta {
+  kind: SourceKind;
+  address?: string;
+  chainId?: number;
+  contractName?: string;
+  note?: string;
+}
+
 export interface AuditResult {
   mode: Mode;
   headline: string;
@@ -77,5 +93,6 @@ export interface AuditResult {
     usedMock: boolean;
     refereeModel: string;
     bytecodeMode: boolean;
+    source: SourceMeta;
   };
 }

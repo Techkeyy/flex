@@ -14,9 +14,12 @@ interface RefereeOut {
 }
 
 function consensusOf(agreed: number, total: number): Consensus {
-  if (total > 0 && agreed >= total) return "confirmed";
-  if (agreed >= 2) return "contested";
-  return "lone";
+  // Corroboration REQUIRES at least two independent auditors — a lone flag is
+  // never "confirmed", even in a degraded run where only one auditor completed
+  // (total === 1). Otherwise a single model could self-certify as consensus.
+  if (agreed < 2) return "lone";
+  if (agreed >= total) return "confirmed"; // everyone who ran agreed
+  return "contested";
 }
 
 /**
@@ -42,7 +45,7 @@ export async function reconcile(
       { role: "system", content: refereeSystemPrompt() },
       { role: "user", content: refereeUserPrompt(reports) },
     ],
-    { temperature: 0 }
+    { temperature: 0, maxTokens: 12000 }
   );
 
   const parsed = extractJson<RefereeOut>(content) ?? {};

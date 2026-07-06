@@ -28,7 +28,11 @@ const JSON_SHAPE = `Return ONLY a JSON object of this exact shape, no prose, no 
   ]
 }
 If you find nothing, return {"findings": []}.
-${ANTI_FABRICATION}`;
+${ANTI_FABRICATION}
+
+OUTPUT FORMAT IS STRICT: your entire response must be exactly one JSON object and nothing else —
+no preamble, no prose, no markdown, no code snippets outside the JSON. Text placed outside the JSON
+object is discarded, so a vulnerability written as prose instead of a finding is a vulnerability LOST.`;
 
 export function auditorSystemPrompt(mode: Mode): string {
   if (mode === "contract") {
