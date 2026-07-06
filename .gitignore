@@ -32,3 +32,6 @@ next-env.d.ts
 *.mp4
 *.mov
 *.webm
+
+# logs
+*.log

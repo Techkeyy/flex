@@ -4,7 +4,6 @@ import { reconcile } from "./consensus";
 import { mockAuditors, mockMerged } from "./mock";
 import type {
   AuditResult,
-  AuditSummary,
   BtlCost,
   Mode,
   MergedFinding,
@@ -20,18 +19,6 @@ function auditorModels(): string[] {
 
 function refereeModel(): string {
   return process.env.FLEX_REFEREE || "qwen3-max";
-}
-
-function summarize(findings: MergedFinding[]): AuditSummary {
-  const s: AuditSummary = {
-    critical: 0, high: 0, medium: 0, low: 0, info: 0,
-    confirmed: 0, contested: 0, lone: 0,
-  };
-  for (const f of findings) {
-    s[f.severity]++;
-    s[f.consensus]++;
-  }
-  return s;
 }
 
 function receiptFrom(costs: BtlCost[]) {
@@ -123,7 +110,6 @@ export async function runAudit(mode: Mode, input: string): Promise<AuditResult> 
       mode,
       headline: merged.headline,
       posture: computePosture(merged.findings),
-      summary: summarize(merged.findings),
       findings: merged.findings,
       auditors: auditors.map((a) => ({
         model: a.model,
@@ -156,7 +142,6 @@ export async function runAudit(mode: Mode, input: string): Promise<AuditResult> 
     mode,
     headline,
     posture: computePosture(findings),
-    summary: summarize(findings),
     findings,
     auditors: auditors.map((a) => ({
       model: a.model,

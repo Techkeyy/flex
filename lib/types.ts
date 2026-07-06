@@ -57,17 +57,6 @@ export interface Receipt {
   savedPct: number;
 }
 
-export interface AuditSummary {
-  critical: number;
-  high: number;
-  medium: number;
-  low: number;
-  info: number;
-  confirmed: number;
-  contested: number;
-  lone: number;
-}
-
 export type PostureLevel = "clean" | "no-consensus" | "corroborated";
 
 /** Data-driven honesty line, computed from consensus — never from model prose. */
@@ -80,7 +69,6 @@ export interface AuditResult {
   mode: Mode;
   headline: string;
   posture: Posture;
-  summary: AuditSummary;
   findings: MergedFinding[];
   auditors: Array<Omit<AuditorResult, "cost"> & { costLabel?: string }>;
   receipt: Receipt;
