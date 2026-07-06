@@ -27,3 +27,8 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# media (demo recordings — keep out of git, too large for GitHub)
+*.mp4
+*.mov
+*.webm
